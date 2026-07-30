@@ -2,14 +2,15 @@ const express = require("express");
 const path = require("path");
 const cors = require("cors");
 const {google} = require("googleapis");
+require("dotenv").config();
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, ".." , "public")));
 
-const spreadsheetId = "YOUR_SPREADSHEET_ID"; // Replace with your Google Sheets ID
+const spreadsheetId = process.env.SPREADSHEET_ID; // Replace with your Google Sheets ID
 const headers = ["id", "name", "email", "course", "createdAt"];
 
 if(!spreadsheetId) {
@@ -54,7 +55,7 @@ async function saveSheetsRows(rows) {
 }
 
 app.get("/", (req, res) => {
-    res.send(path.join("__dirname", "..", "public", "index.html"));
+    res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
 
 app.get("/students", async(req, res) => {
@@ -62,7 +63,8 @@ app.get("/students", async(req, res) => {
         const students = await getSheetRows();
         res.json(students);
     } catch (error) {
-        res.status(500).json({error: "failed to fetch students"});
+         console.error("GET /students failed:", error);
+        res.status(500).json({error: "failed to fetch students", message: error.message});
     }
 });
 
@@ -85,7 +87,7 @@ app.post("/students", async(req, res) => {
     }
 });
 
-app.put("students/:id", async (req, res) => {
+app.put("/students/:id", async (req, res) => {
     try{
         const students = await getSheetRows();
         const index  = students.findIndex((student) => student.id === req.params.id);
